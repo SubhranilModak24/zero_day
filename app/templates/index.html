@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VouchPay — The Last-Mile Verifier</title>
+  <style>
+    :root {
+      --bg: #0f0f1a;
+      --card: #1a1a2e;
+      --accent: #00d4ff;
+      --accent2: #7c3aed;
+      --green: #22c55e;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --border: #2d2d44;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ---- nav ---- */
+    nav {
+      width: 100%;
+      padding: 1.2rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: rgba(26,26,46,.85);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .logo {
+      font-size: 1.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .tag {
+      font-size: .75rem;
+      padding: .3rem .7rem;
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+      color: var(--accent);
+    }
+
+    /* ---- hero ---- */
+    .hero {
+      text-align: center;
+      padding: 3rem 1rem 1.5rem;
+      max-width: 600px;
+    }
+    .hero h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: .6rem;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p { color: var(--muted); line-height: 1.6; }
+
+    /* ---- upload card ---- */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem;
+      width: min(520px, 92vw);
+      margin-bottom: 2rem;
+    }
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 2.5rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: .25s;
+      position: relative;
+    }
+    .dropzone.active,
+    .dropzone:hover {
+      border-color: var(--accent);
+      background: rgba(0,212,255,.05);
+    }
+    .dropzone .icon { font-size: 2.5rem; margin-bottom: .8rem; }
+    .dropzone p { color: var(--muted); font-size: .9rem; }
+    .dropzone .browse { color: var(--accent); font-weight: 600; cursor: pointer; }
+    #fileInput { display: none; }
+
+    /* preview */
+    .preview {
+      display: none;
+      margin-top: 1.2rem;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .preview img {
+      width: 100%;
+      max-height: 300px;
+      object-fit: contain;
+      background: #000;
+    }
+    .preview .name {
+      padding: .6rem 1rem;
+      font-size: .85rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* button */
+    .btn {
+      display: block;
+      width: 100%;
+      margin-top: 1.4rem;
+      padding: .9rem;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      transition: .2s;
+    }
+    .btn:hover { opacity: .9; transform: translateY(-1px); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* spinner */
+    .spinner {
+      display: none;
+      margin: 1.2rem auto 0;
+      text-align: center;
+    }
+    .spinner .dot {
+      display: inline-block;
+      width: 10px; height: 10px;
+      margin: 0 4px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: bounce .6s alternate infinite;
+    }
+    .spinner .dot:nth-child(2) { animation-delay: .2s; }
+    .spinner .dot:nth-child(3) { animation-delay: .4s; }
+    @keyframes bounce { to { transform: translateY(-12px); opacity: .3; } }
+    .spinner p { margin-top: .6rem; color: var(--muted); font-size: .85rem; }
+
+    /* ---- parameters ---- */
+    .params {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      width: min(520px, 92vw);
+      margin-bottom: 3rem;
+    }
+    .param {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.2rem;
+    }
+    .param .weight {
+      font-size: .7rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .param h3 { font-size: .95rem; margin: .3rem 0; }
+    .param p { font-size: .78rem; color: var(--muted); line-height: 1.5; }
+
+    footer {
+      padding: 1.5rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: .75rem;
+      border-top: 1px solid var(--border);
+      width: 100%;
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">VouchPay</div>
+  <span class="tag">Hackanovate 2.0</span>
+</nav>
+
+<div class="hero">
+  <h1>Verify Any <span>UPI Payment</span> Screenshot</h1>
+  <p>Upload a payment screenshot and our AI + forensic engine will score its authenticity across 4 parameters in seconds.</p>
+</div>
+
+<form id="uploadForm" class="card" action="/upload" method="post" enctype="multipart/form-data">
+  <div class="dropzone" id="dropzone">
+    <div class="icon">📤</div>
+    <p>Drag & drop your payment screenshot here</p>
+    <p>or <span class="browse" onclick="document.getElementById('fileInput').click()">browse files</span></p>
+    <p style="margin-top:.5rem;font-size:.75rem;">PNG, JPG up to 10 MB</p>
+    <input type="file" id="fileInput" name="file" accept="image/*" required>
+  </div>
+
+  <div class="preview" id="preview">
+    <img id="previewImg" alt="Preview">
+    <div class="name">
+      <span id="fileName"></span>
+      <span id="fileSize"></span>
+    </div>
+  </div>
+
+  <button class="btn" type="submit" id="submitBtn" disabled>Analyze Screenshot</button>
+
+  <div class="spinner" id="spinner">
+    <div><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    <p>Running forensic analysis & AI extraction…</p>
+  </div>
+</form>
+
+<div class="params">
+  <div class="param">
+    <span class="weight">30 % Weight</span>
+    <h3>🔬 Pixel Forensics</h3>
+    <p>ELA heatmap exposes re-compressed or pasted regions like a modified amount.</p>
+  </div>
+  <div class="param">
+    <span class="weight">25 % Weight</span>
+    <h3>🔍 OCR & Visual Audit</h3>
+    <p>Local OCR engine detects font mismatches, low confidence patches & clock inconsistencies.</p>
+  </div>
+  <div class="param">
+    <span class="weight">20 % Weight</span>
+    <h3>📋 Rules & Metadata</h3>
+    <p>12-digit UTR check, EXIF editor scan, future-timestamp detection.</p>
+  </div>
+  <div class="param">
+    <span class="weight">25 % Weight</span>
+    <h3>🤝 Dual-Party Link</h3>
+    <p>Unique verification link for the other party to confirm or dispute.</p>
+  </div>
+</div>
+
+<footer>VouchPay &copy; 2026 — Hackanovate 2.0 · Built for Problem Statement 1: The Last-Mile Verifier</footer>
+
+<script>
+  const dropzone  = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const preview   = document.getElementById('preview');
+  const previewImg= document.getElementById('previewImg');
+  const fileName  = document.getElementById('fileName');
+  const fileSize  = document.getElementById('fileSize');
+  const submitBtn = document.getElementById('submitBtn');
+  const spinner   = document.getElementById('spinner');
+  const form      = document.getElementById('uploadForm');
+
+  // drag events
+  ['dragenter','dragover'].forEach(e => {
+    dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.add('active'); });
+  });
+  ['dragleave','drop'].forEach(e => {
+    dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.remove('active'); });
+  });
+  dropzone.addEventListener('drop', ev => {
+    fileInput.files = ev.dataTransfer.files;
+    showPreview(ev.dataTransfer.files[0]);
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) showPreview(fileInput.files[0]);
+  });
+
+  function showPreview(file) {
+    const reader = new FileReader();
+    reader.onload = e => { previewImg.src = e.target.result; };
+    reader.readAsDataURL(file);
+    fileName.textContent = file.name;
+    fileSize.textContent = (file.size / 1024).toFixed(1) + ' KB';
+    preview.style.display = 'block';
+    submitBtn.disabled = false;
+  }
+
+  form.addEventListener('submit', () => {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Analyzing…';
+    spinner.style.display = 'block';
+  });
+</script>
+
+</body>
+</html>

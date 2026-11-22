@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🛡️ VouchPay — The Last-Mile Payment Verifier
 
 **VouchPay** is a forensic payment verification platform built to protect gig workers, delivery partners, and freelancers from fake or edited UPI payment screenshots. It combines pixel-level image forensics, Vision AI auditing, mathematical UPI UTR decoding, and a dual-party confirmation handshake to generate a tamper-evident dispute certificate.
@@ -60,3 +61,73 @@ vouchpay/
 ├── .env.example                # Environment variable template
 ├── requirements.txt            # Python dependencies
 └── README.md
+=======
+# VouchPay — The Last-Mile Verifier
+
+> **Hackanovate 2.0 · Problem Statement 1**
+> Gig workers & freelancers get cheated daily by fake/edited UPI payment screenshots. VouchPay is a 100% local, free Python-based forensic and OCR audit engine that verifies every uploaded payment proof and produces a 0–100 Trust Score with a timestamped, SHA-256-verified PDF certificate.
+> **No paid APIs or external LLMs required.**
+
+---
+
+## 🏗️ Architecture
+
+```
+app/
+├── main.py               # FastAPI routes & trust-score calculator
+├── schemas.py             # Pydantic data models
+├── forensics/
+│   └── analyzer.py        # ELA heatmap · EXIF scan · SHA-256 hash
+├── ai_engine/
+│   └── extractor.py       # RapidOCR ONNX extraction & bounding-box audit
+├── rules/
+│   └── validator.py       # UTR format · timestamp · metadata rules
+├── pdf/
+│   └── cert_gen.py        # ReportLab PDF certificate generator
+└── templates/
+    ├── index.html          # Upload page (drag & drop)
+    └── verify.html         # Verification results dashboard
+```
+
+## 📊 Trust Score (0–100) — 4 Parameters
+
+| # | Parameter              | Weight | Signals                                                       |
+|---|------------------------|--------|---------------------------------------------------------------|
+| 1 | Pixel Forensics (ELA)  | 30 %   | Heatmap intensity on amount & UTR regions (PIL ImageChops)    |
+| 2 | OCR & Visual Audit     | 25 %   | RapidOCR confidence, bounding box skew, missing fields audit   |
+| 3 | Rules & Metadata       | 20 %   | 12-digit UTR check, EXIF editor scan, future-timestamp flag   |
+| 4 | Dual-Party Handshake   | 25 %   | Confirm/dispute via unique `/verify/{id}` link                |
+
+- **80–100** → ✅ Verified
+- **50–79** → ⚠️ Suspicious
+- **< 50** → ❌ High Tamper Risk
+
+## 🚀 Quick Start
+
+```bash
+# 1. Create & activate virtual environment
+python -m venv hack
+hack\Scripts\activate        # Windows
+# source hack/bin/activate   # Linux/Mac
+
+# 2. Install dependencies (100% free, local)
+pip install -r requirements.txt
+
+# 3. Run
+uvicorn app.main:app --reload --port 8000
+```
+
+Then open **http://localhost:8000** in your browser.
+
+## 📦 Dependencies
+
+- **FastAPI** + **Uvicorn** — web framework & ASGI server
+- **RapidOCR-ONNXRuntime** + **OpenCV** — free local OCR & bounding box analysis
+- **Pillow** — ELA image processing
+- **ReportLab** — PDF certificate generation
+- **python-dotenv** — environment configuration
+
+## 👥 Team
+
+Built for Hackanovate 2.0 — Sinu Main Fest
+>>>>>>> 9c10521 (Add Firebase integration, frontend, and test suite)

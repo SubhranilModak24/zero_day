@@ -1,0 +1,8 @@
+{
+  "name": "VouchPay",
+  "description": "Real-time UPI payment verification, cryptographic proof auditing, fraud deterrence, and bank settlement reconciliation platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

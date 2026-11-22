@@ -19,6 +19,7 @@ class VerificationRecord(BaseModel):
     tx_id: str
     status: str                  # PENDING, CONFIRMED, DISPUTED
     trust_score: int             # 0 to 100
+    handshake_status: str = "PENDING"  # PENDING, CONFIRMED, DISPUTED
     forensics: ForensicResult
     extraction: AIExtractionResult
     rule_flags: List[str]

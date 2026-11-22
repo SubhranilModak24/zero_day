@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VouchPay — Verification Result</title>
+  <style>
+    :root {
+      --bg: #0f0f1a;
+      --card: #1a1a2e;
+      --accent: #00d4ff;
+      --accent2: #7c3aed;
+      --green: #22c55e;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --border: #2d2d44;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 3rem;
+    }
+
+    nav {
+      width: 100%;
+      padding: 1.2rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: rgba(26,26,46,.85);
+      backdrop-filter: blur(12px);
+    }
+    .logo {
+      font-size: 1.6rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      text-decoration: none;
+    }
+    .tag { font-size:.75rem; padding:.3rem .7rem; border:1px solid var(--accent); border-radius:999px; color:var(--accent); }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
+
+    /* ---- score header ---- */
+    .score-header {
+      text-align: center;
+      padding: 2rem 0 1.5rem;
+    }
+    .score-ring {
+      position: relative;
+      display: inline-block;
+      width: 160px; height: 160px;
+    }
+    .score-ring svg { transform: rotate(-90deg); }
+    .score-ring .bg { fill: none; stroke: var(--border); stroke-width: 10; }
+    .score-ring .fg { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+    .score-num {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2.4rem;
+      font-weight: 800;
+    }
+    .score-label { font-size: .85rem; color: var(--muted); margin-top: .3rem; }
+
+    .badge {
+      display: inline-block;
+      padding: .4rem 1.4rem;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: .9rem;
+      color: #fff;
+      margin-top: .8rem;
+    }
+    .badge.CONFIRMED { background: var(--green); }
+    .badge.SUSPICIOUS { background: var(--yellow); color: #000; }
+    .badge.DISPUTED { background: var(--red); }
+    .badge.PENDING { background: #6b7280; }
+
+    /* ---- grid ---- */
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: 1.5rem; }
+    @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+    }
+    .card h3 {
+      font-size: .85rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+    .card.full { grid-column: 1 / -1; }
+
+    /* detail rows */
+    .row { display: flex; justify-content: space-between; padding: .45rem 0; border-bottom: 1px solid var(--border); font-size: .88rem; }
+    .row:last-child { border: none; }
+    .row .label { color: var(--muted); }
+    .row .value { font-weight: 600; text-align: right; max-width: 60%; word-break: break-all; }
+
+    /* flags */
+    .flag {
+      background: rgba(239,68,68,.12);
+      border-left: 3px solid var(--red);
+      padding: .5rem .8rem;
+      margin-bottom: .5rem;
+      border-radius: 0 8px 8px 0;
+      font-size: .82rem;
+      color: #fca5a5;
+    }
+
+    /* images */
+    .img-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .img-compare .img-box { text-align: center; }
+    .img-compare img {
+      width: 100%; max-height: 280px;
+      object-fit: contain;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #000;
+    }
+    .img-compare .caption { font-size: .75rem; color: var(--muted); margin-top: .4rem; }
+
+    /* parameter bars */
+    .param-bar { margin-bottom: 1rem; }
+    .param-bar .top { display: flex; justify-content: space-between; font-size: .82rem; margin-bottom: .3rem; }
+    .param-bar .track { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+    .param-bar .fill { height: 100%; border-radius: 4px; transition: width .8s ease; }
+
+    /* actions */
+    .actions { display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap; }
+    .btn {
+      flex: 1; min-width: 140px;
+      padding: .8rem 1rem;
+      border: none; border-radius: 10px;
+      font-size: .9rem; font-weight: 700;
+      cursor: pointer; transition: .2s;
+      text-align: center; text-decoration: none;
+      display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+    }
+    .btn:hover { opacity: .88; transform: translateY(-1px); }
+    .btn-confirm { background: var(--green); color: #fff; }
+    .btn-dispute { background: var(--red); color: #fff; }
+    .btn-pdf { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
+    .btn-link { background: var(--card); color: var(--accent); border: 1px solid var(--accent); }
+
+    .verify-url {
+      margin-top: 1rem;
+      padding: .8rem 1rem;
+      background: rgba(0,212,255,.08);
+      border: 1px dashed var(--accent);
+      border-radius: 10px;
+      font-family: monospace;
+      font-size: .85rem;
+      word-break: break-all;
+      color: var(--accent);
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 1.5rem;
+      color: var(--muted);
+      font-size: .85rem;
+      text-decoration: none;
+    }
+    .back-link:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">VouchPay</a>
+  <span class="tag">Verification Report</span>
+</nav>
+
+<div class="container">
+
+  <!-- TRUST SCORE -->
+  <div class="score-header">
+    {% set score = record.trust_score %}
+    {% if score >= 80 %}
+      {% set color = "#22c55e" %}
+    {% elif score >= 50 %}
+      {% set color = "#f59e0b" %}
+    {% else %}
+      {% set color = "#ef4444" %}
+    {% endif %}
+
+    <div class="score-ring">
+      <svg viewBox="0 0 160 160" width="160" height="160">
+        <circle class="bg" cx="80" cy="80" r="70"/>
+        <circle class="fg" cx="80" cy="80" r="70"
+                stroke="{{ color }}"
+                stroke-dasharray="{{ 2 * 3.14159 * 70 }}"
+                stroke-dashoffset="{{ 2 * 3.14159 * 70 * (1 - score / 100) }}"/>
+      </svg>
+      <div class="score-num" style="color:{{ color }}">{{ score }}</div>
+    </div>
+    <div class="score-label">Trust Score out of 100</div>
+    <div class="badge {{ record.status }}">{{ record.status }}</div>
+  </div>
+
+  <!-- PARAMETER BREAKDOWN -->
+  <div class="card full">
+    <h3>📊 Parameter Breakdown</h3>
+    {% set tamper = record.forensics.tamper_score %}
+    {% set anomaly_count = record.extraction.visual_anomalies | length %}
+    {% set flag_count = record.rule_flags | length %}
+
+    <div class="param-bar">
+      <div class="top">
+        <span>🔬 Pixel Forensics (ELA) — 30%</span>
+        <span>Tamper: {{ tamper }}%</span>
+      </div>
+      <div class="track"><div class="fill" style="width:{{ [100 - tamper, 0] | max }}%;background:#22c55e"></div></div>
+    </div>
+    <div class="param-bar">
+      <div class="top">
+        <span>🔍 OCR & Visual Audit — 25%</span>
+        <span>{{ anomaly_count }} anomalies</span>
+      </div>
+      <div class="track"><div class="fill" style="width:{{ [100 - anomaly_count * 15, 0] | max }}%;background:#00d4ff"></div></div>
+    </div>
+    <div class="param-bar">
+      <div class="top">
+        <span>📋 Rules & Metadata — 20%</span>
+        <span>{{ flag_count }} flags</span>
+      </div>
+      <div class="track"><div class="fill" style="width:{{ [100 - flag_count * 20, 0] | max }}%;background:#f59e0b"></div></div>
+    </div>
+    <div class="param-bar">
+      <div class="top">
+        <span>🤝 Dual-Party Handshake — 25%</span>
+        <span id="handshakeLabel">
+          {% if record.handshake_status == 'CONFIRMED' %}
+            Confirmed (+25 pts)
+          {% elif record.handshake_status == 'DISPUTED' %}
+            Disputed (-25 pts)
+          {% else %}
+            Pending Verification (+0 pts)
+          {% endif %}
+        </span>
+      </div>
+      <div class="track">
+        <div id="handshakeBar" class="fill" style="
+          {% if record.handshake_status == 'CONFIRMED' %}
+            width: 100%; background: #22c55e;
+          {% elif record.handshake_status == 'DISPUTED' %}
+            width: 0%; background: #ef4444;
+          {% else %}
+            width: 0%; background: #7c3aed;
+          {% endif %}
+        "></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <!-- EXTRACTED DATA -->
+    <div class="card">
+      <h3>💳 Extracted Data</h3>
+      <div class="row"><span class="label">Amount</span><span class="value">₹{{ record.extraction.amount or 'N/A' }}</span></div>
+      <div class="row"><span class="label">UTR</span><span class="value">{{ record.extraction.utr or 'N/A' }}</span></div>
+      <div class="row"><span class="label">Date</span><span class="value">{{ record.extraction.receipt_date or 'N/A' }}</span></div>
+      <div class="row"><span class="label">Time</span><span class="value">{{ record.extraction.receipt_time or 'N/A' }}</span></div>
+      <div class="row"><span class="label">App</span><span class="value">{{ record.extraction.app_name or 'N/A' }}</span></div>
+    </div>
+
+    <!-- FORENSICS -->
+    <div class="card">
+      <h3>🔬 Forensic Details</h3>
+      <div class="row"><span class="label">Tamper Score</span><span class="value">{{ record.forensics.tamper_score }}%</span></div>
+      <div class="row"><span class="label">SHA-256</span><span class="value" style="font-size:.7rem">{{ record.forensics.image_sha256[:24] }}…</span></div>
+      <div class="row"><span class="label">EXIF Flags</span><span class="value">{{ record.forensics.exif_flags | length }}</span></div>
+      <div class="row"><span class="label">TX ID</span><span class="value">{{ tx_id }}</span></div>
+      <div class="row"><span class="label">Created</span><span class="value" style="font-size:.78rem">{{ record.created_at[:19] }}</span></div>
+    </div>
+
+    <!-- ELA HEATMAP -->
+    <div class="card full">
+      <h3>🗺️ ELA Heatmap Comparison</h3>
+      <div class="img-compare">
+        {% if original_image %}
+        <div class="img-box">
+          <img src="{{ original_image }}" alt="Original">
+          <div class="caption">Original Upload</div>
+        </div>
+        {% endif %}
+        <div class="img-box">
+          <img src="{{ ela_image }}" alt="ELA Heatmap">
+          <div class="caption">ELA Heatmap — bright regions = potential edits</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FLAGS -->
+    {% if record.rule_flags or record.extraction.visual_anomalies %}
+    <div class="card full">
+      <h3>⚠️ Flags & Anomalies</h3>
+      {% for flag in record.rule_flags %}
+        <div class="flag">📌 {{ flag }}</div>
+      {% endfor %}
+      {% for anomaly in record.extraction.visual_anomalies %}
+        <div class="flag">🤖 {{ anomaly }}</div>
+      {% endfor %}
+      {% if not record.rule_flags and not record.extraction.visual_anomalies %}
+        <p style="color:var(--green)">✅ No flags raised — image looks clean.</p>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="actions">
+    <button class="btn btn-confirm" onclick="handshake('confirm')">✅ Confirm Payment</button>
+    <button class="btn btn-dispute" onclick="handshake('dispute')">❌ Dispute Payment</button>
+    <a class="btn btn-pdf" href="/verify/{{ tx_id }}/pdf">📄 Download PDF Certificate</a>
+  </div>
+
+  <!-- VERIFICATION LINK -->
+  <div class="verify-url" id="verifyUrl">
+    🔗 Shareable verification link: <strong id="linkText"></strong>
+  </div>
+
+  <a href="/" class="back-link">← Verify another screenshot</a>
+</div>
+
+<script>
+  // Set the shareable link
+  const link = window.location.origin + '/verify/{{ tx_id }}';
+  document.getElementById('linkText').textContent = link;
+
+  async function handshake(action) {
+    const btnConfirm = document.querySelector('.btn-confirm');
+    const btnDispute = document.querySelector('.btn-dispute');
+    if (btnConfirm) btnConfirm.disabled = true;
+    if (btnDispute) btnDispute.disabled = true;
+
+    try {
+      const res = await fetch('/verify/{{ tx_id }}/' + action, { method: 'POST' });
+      const data = await res.json();
+
+      // Immediately update DOM elements in real-time
+      const scoreNum = document.querySelector('.score-num');
+      const badge = document.querySelector('.badge');
+      const fgCircle = document.querySelector('.fg');
+      const handshakeLabel = document.getElementById('handshakeLabel');
+      const handshakeBar = document.getElementById('handshakeBar');
+
+      let color = data.trust_score >= 80 ? '#22c55e' : (data.trust_score >= 50 ? '#f59e0b' : '#ef4444');
+
+      if (scoreNum) {
+        scoreNum.textContent = data.trust_score;
+        scoreNum.style.color = color;
+      }
+      if (badge) {
+        badge.textContent = data.status;
+        badge.className = 'badge ' + data.status;
+      }
+      if (fgCircle) {
+        fgCircle.setAttribute('stroke', color);
+        const circum = 2 * 3.14159 * 70;
+        fgCircle.style.strokeDashoffset = circum * (1 - data.trust_score / 100);
+      }
+      if (handshakeLabel && handshakeBar) {
+        if (action === 'confirm') {
+          handshakeLabel.textContent = 'Confirmed (+25 pts)';
+          handshakeBar.style.width = '100%';
+          handshakeBar.style.background = '#22c55e';
+        } else {
+          handshakeLabel.textContent = 'Disputed (-25 pts)';
+          handshakeBar.style.width = '0%';
+          handshakeBar.style.background = '#ef4444';
+        }
+      }
+
+      alert(action === 'confirm'
+        ? '✅ Payment confirmed! Trust score updated to ' + data.trust_score + '/100 (' + data.status + ')'
+        : '❌ Payment disputed! Trust score updated to ' + data.trust_score + '/100 (' + data.status + ')'
+      );
+    } catch (e) {
+      alert('Error updating score: ' + e.message);
+    } finally {
+      if (btnConfirm) btnConfirm.disabled = false;
+      if (btnDispute) btnDispute.disabled = false;
+    }
+  }
+</script>
+
+</body>
+</html>
