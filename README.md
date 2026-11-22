@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 🛡️ VouchPay — The Last-Mile Payment Verifier
 
 **VouchPay** is a forensic payment verification platform built to protect gig workers, delivery partners, and freelancers from fake or edited UPI payment screenshots. It combines pixel-level image forensics, Vision AI auditing, mathematical UPI UTR decoding, and a dual-party confirmation handshake to generate a tamper-evident dispute certificate.
@@ -130,4 +129,3 @@ Then open **http://localhost:8000** in your browser.
 ## 👥 Team
 
 Built for Hackanovate 2.0 — Sinu Main Fest
->>>>>>> 9c10521 (Add Firebase integration, frontend, and test suite)
